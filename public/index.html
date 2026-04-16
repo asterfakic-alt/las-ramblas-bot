@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Las Ramblas · Digital Sommelier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --rose: #c8a49a;
+      --rose-light: #f5eeec;
+      --rose-dark: #a07a70;
+      --text: #1a1a1a;
+      --text-muted: #777;
+      --bg: #fff;
+      --bg2: #f9f6f5;
+      --border: rgba(0,0,0,0.08);
+      --radius: 16px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ── */
+    .header {
+      flex-shrink: 0;
+      background: var(--bg);
+      border-bottom: 0.5px solid var(--border);
+      padding: 14px 16px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left { display: flex; flex-direction: column; }
+
+    .brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 19px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .brand-sub {
+      font-size: 10px;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .live-dot {
+      width: 6px; height: 6px;
+      background: var(--rose);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+    /* ── Language switcher ── */
+    .lang-switcher {
+      display: flex;
+      gap: 4px;
+      background: var(--bg2);
+      border-radius: 99px;
+      padding: 3px;
+      border: 0.5px solid var(--border);
+    }
+
+    .lang-btn {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 11px;
+      border-radius: 99px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s;
+    }
+
+    .lang-btn.active {
+      background: var(--rose);
+      color: #fff;
+    }
+
+    /* ── Chat area ── */
+    .chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+    }
+
+    .chat::-webkit-scrollbar { width: 3px; }
+    .chat::-webkit-scrollbar-thumb { background: #ddd; border-radius: 99px; }
+
+    .msg-wrap { display: flex; flex-direction: column; }
+    .msg-wrap.bot { align-items: flex-start; }
+    .msg-wrap.user { align-items: flex-end; }
+
+    .msg-name {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      color: var(--rose);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .bubble {
+      max-width: 84%;
+      padding: 11px 15px;
+      font-size: 14.5px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .bubble.bot {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: 18px 18px 18px 4px;
+      color: var(--text);
+    }
+
+    .bubble.user {
+      background: var(--rose);
+      color: #fff;
+      border-radius: 18px 18px 4px 18px;
+    }
+
+    /* typing indicator */
+    .typing-wrap { align-items: flex-start; }
+    .typing-bubble {
+      display: flex; gap: 5px; align-items: center;
+      padding: 13px 16px;
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: 18px 18px 18px 4px;
+    }
+    .typing-bubble span {
+      width: 6px; height: 6px;
+      background: #bbb;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing-bubble span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-bubble span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,80%,100%{transform:translateY(0);opacity:.4} 40%{transform:translateY(-5px);opacity:1} }
+
+    /* ── Quick chips ── */
+    .chips-area {
+      flex-shrink: 0;
+      padding: 0 16px 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .chip {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12.5px;
+      padding: 6px 13px;
+      border-radius: 99px;
+      border: 0.5px solid var(--rose);
+      background: transparent;
+      color: var(--rose);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .chip:active, .chip:hover { background: var(--rose); color: #fff; }
+
+    /* ── Input bar ── */
+    .input-bar {
+      flex-shrink: 0;
+      padding: 10px 12px 16px;
+      background: var(--bg);
+      border-top: 0.5px solid var(--border);
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .input-bar textarea {
+      flex: 1;
+      min-height: 44px;
+      max-height: 110px;
+      resize: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      padding: 10px 13px;
+      border-radius: 12px;
+      border: 0.5px solid #ddd;
+      background: var(--bg2);
+      color: var(--text);
+      outline: none;
+      line-height: 1.45;
+      overflow-y: auto;
+    }
+    .input-bar textarea:focus { border-color: var(--rose); }
+
+    .send-btn {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      border: none;
+      background: var(--rose);
+      color: #fff;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .send-btn:active { transform: scale(0.95); }
+    .send-btn:disabled { opacity: 0.4; cursor: default; }
+
+    /* iOS safe area */
+    @supports (padding: max(0px)) {
+      .input-bar { padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="brand">Las Ramblas</div>
+      <div class="brand-sub">
+        <span class="live-dot"></span>
+        <span id="sub-label">Digital Sommelier · The Lab</span>
+      </div>
+    </div>
+    <div class="lang-switcher">
+      <button class="lang-btn active" id="btn-el" onclick="setLang('el')">ΕΛ</button>
+      <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+    </div>
+  </div>
+
+  <!-- Chat -->
+  <div class="chat" id="chat"></div>
+
+  <!-- Chips -->
+  <div class="chips-area" id="chips"></div>
+
+  <!-- Input -->
+  <div class="input-bar">
+    <textarea id="inp" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="send()">↑</button>
+  </div>
+
+</div>
+
+<script>
+const CHIPS = {
+  el: [
+    { label: "☕ Τι καφέδες έχετε;",    msg: "Τι καφέδες έχετε;" },
+    { label: "🍳 Brunch προτάσεις",      msg: "Έχετε κάτι για brunch;" },
+    { label: "🧇 Pancakes",              msg: "Πείτε μου για τα pancakes σας." },
+    { label: "🌿 Specialty καφές",       msg: "Τι είναι το Slow Bar;" },
+    { label: "🍷 Κρασιά & cocktails",    msg: "Έχετε κρασιά ή cocktails;" },
+  ],
+  en: [
+    { label: "☕ What coffees do you have?", msg: "What coffees do you have?" },
+    { label: "🍳 Brunch suggestions",        msg: "What do you recommend for brunch?" },
+    { label: "🧇 Pancakes",                  msg: "Tell me about your pancakes." },
+    { label: "🌿 Specialty coffee",          msg: "What is the Slow Bar?" },
+    { label: "🍷 Wines & cocktails",         msg: "Do you have wines or cocktails?" },
+  ],
+};
+
+const WELCOME = {
+  el: "Καλωσήρθες στο Las Ramblas The Lab! ☕\n\nΕίμαι ο Digital Sommelier σας — εδώ για να σε βοηθήσω να διαλέξεις τον τέλειο καφέ ή να σε ξεναγήσω στο μενού μας. Τι σου κάνει κέφι σήμερα;",
+  en: "Welcome to Las Ramblas The Lab! ☕\n\nI'm your Digital Sommelier — here to help you find the perfect coffee or guide you through our menu. What are you in the mood for today?",
+};
+
+const PLACEHOLDER = { el: "Ρώτησέ με για το μενού…", en: "Ask me about the menu…" };
+const SUB_LABEL   = { el: "Digital Sommelier · The Lab", en: "Digital Sommelier · The Lab" };
+const ERROR_MSG   = { el: "Τεχνικό πρόβλημα — δοκίμασε ξανά! 🙏", en: "Something went wrong — please try again! 🙏" };
+
+let lang = "el";
+let history = [];
+let loading = false;
+let activeChips = [...CHIPS.el];
+
+/* ── Language switch ── */
+function setLang(l) {
+  if (l === lang) return;
+  lang = l;
+  document.getElementById("btn-el").classList.toggle("active", l === "el");
+  document.getElementById("btn-en").classList.toggle("active", l === "en");
+  document.getElementById("sub-label").textContent = SUB_LABEL[l];
+  document.getElementById("inp").placeholder = PLACEHOLDER[l];
+
+  // Reset conversation
+  history = [];
+  activeChips = [...CHIPS[l]];
+  document.getElementById("chat").innerHTML = "";
+  renderChips();
+  appendBubble(WELCOME[l], "bot");
+}
+
+/* ── Chips ── */
+function renderChips() {
+  const area = document.getElementById("chips");
+  area.innerHTML = "";
+  activeChips.forEach((c, i) => {
+    const btn = document.createElement("button");
+    btn.className = "chip";
+    btn.textContent = c.label;
+    btn.onclick = () => useChip(i);
+    area.appendChild(btn);
+  });
+}
+
+function useChip(idx) {
+  const chip = activeChips[idx];
+  activeChips.splice(idx, 1);
+  renderChips();
+  appendBubble(chip.label, "user");
+  callAPI(chip.msg);
+}
+
+/* ── Chat rendering ── */
+function appendBubble(text, role) {
+  const chat = document.getElementById("chat");
+  const wrap = document.createElement("div");
+  wrap.className = `msg-wrap ${role}`;
+
+  if (role === "bot") {
+    const name = document.createElement("div");
+    name.className = "msg-name";
+    name.textContent = "Sommelier";
+    wrap.appendChild(name);
+  }
+
+  const b = document.createElement("div");
+  b.className = `bubble ${role}`;
+  b.textContent = text;
+  wrap.appendChild(b);
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const chat = document.getElementById("chat");
+  const wrap = document.createElement("div");
+  wrap.className = "msg-wrap typing-wrap";
+  wrap.id = "typing";
+
+  const name = document.createElement("div");
+  name.className = "msg-name";
+  name.textContent = "Sommelier";
+  wrap.appendChild(name);
+
+  const b = document.createElement("div");
+  b.className = "typing-bubble";
+  b.innerHTML = "<span></span><span></span><span></span>";
+  wrap.appendChild(b);
+
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function hideTyping() {
+  const t = document.getElementById("typing");
+  if (t) t.remove();
+}
+
+/* ── API call ── */
+async function callAPI(userMsg) {
+  if (loading) return;
+  loading = true;
+  document.getElementById("sendBtn").disabled = true;
+
+  history.push({ role: "user", content: userMsg });
+  showTyping();
+
+  try {
+    const res = await fetch("/.netlify/functions/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: history, language: lang }),
+    });
+
+    const data = await res.json();
+    hideTyping();
+
+    if (data.error) throw new Error(data.error);
+
+    history.push({ role: "assistant", content: data.reply });
+    appendBubble(data.reply, "bot");
+  } catch {
+    hideTyping();
+    history.pop();
+    appendBubble(ERROR_MSG[lang], "bot");
+  }
+
+  loading = false;
+  document.getElementById("sendBtn").disabled = false;
+}
+
+/* ── Send ── */
+function send() {
+  const inp = document.getElementById("inp");
+  const msg = inp.value.trim();
+  if (!msg || loading) return;
+  inp.value = "";
+  inp.style.height = "44px";
+  appendBubble(msg, "user");
+  callAPI(msg);
+}
+
+function handleKey(e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+}
+
+function autoResize(el) {
+  el.style.height = "44px";
+  el.style.height = Math.min(el.scrollHeight, 110) + "px";
+}
+
+/* ── Init ── */
+document.getElementById("inp").placeholder = PLACEHOLDER[lang];
+renderChips();
+appendBubble(WELCOME[lang], "bot");
+</script>
+</body>
+</html>
