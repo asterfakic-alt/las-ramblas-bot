@@ -310,10 +310,15 @@ const ERROR_MSG   = { el: "Τεχνικό πρόβλημα — δοκίμασε 
 
 let lang = "el";
 let history = [];
-let msgCount = 0;
-const MSG_LIMIT = 5;
 let loading = false;
 let activeChips = [...CHIPS.el];
+let msgCount = 0;
+const MSG_LIMIT = 5;
+
+const LIMIT_MSG = {
+  el: "Φαίνεται ότι τα πήγαμε καλά μαζί, αλλά έχω φτάσει στα όριά μου ☕😄 Ο σερβιτόρος μας είναι πολύ καλύτερος από εμένα σε αγκαλιές και χαμόγελα — κάλεσέ τον!",
+  en: "Looks like we had a great chat, but I've reached my limit ☕😄 Our waiter is much better than me at smiles and hugs — give them a wave!",
+};
 
 /* ── Language switch ── */
 function setLang(l) {
@@ -326,6 +331,7 @@ function setLang(l) {
 
   // Reset conversation
   history = [];
+  msgCount = 0;
   activeChips = [...CHIPS[l]];
   document.getElementById("chat").innerHTML = "";
   renderChips();
@@ -402,6 +408,16 @@ function hideTyping() {
 /* ── API call ── */
 async function callAPI(userMsg) {
   if (loading) return;
+
+  msgCount++;
+  if (msgCount > MSG_LIMIT) {
+    appendBubble(LIMIT_MSG[lang], "bot");
+    document.getElementById("inp").disabled = true;
+    document.getElementById("sendBtn").disabled = true;
+    document.getElementById("chips").innerHTML = "";
+    return;
+  }
+
   loading = true;
   document.getElementById("sendBtn").disabled = true;
 
