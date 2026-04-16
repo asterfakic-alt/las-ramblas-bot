@@ -310,6 +310,8 @@ const ERROR_MSG   = { el: "Τεχνικό πρόβλημα — δοκίμασε 
 
 let lang = "el";
 let history = [];
+let msgCount = 0;
+const MSG_LIMIT = 5;
 let loading = false;
 let activeChips = [...CHIPS.el];
 
