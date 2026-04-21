@@ -320,6 +320,44 @@ const LIMIT_MSG = {
   en: "Looks like we had a great chat, but I've reached my limit ☕😄 Our waiter is much better than me at smiles and hugs — give them a wave!",
 };
 
+/* ── Fingerprint anti-abuse ── */
+const DAILY_LIMIT = 20; // max μηνύματα ανά συσκευή ανά ημέρα
+
+function getFingerprint() {
+  let fp = localStorage.getItem("lr_fp");
+  if (!fp) {
+    fp = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem("lr_fp", fp);
+  }
+  return fp;
+}
+
+function getTodayKey() {
+  return "lr_cnt_" + new Date().toISOString().slice(0, 10);
+}
+
+function getDailyCount() {
+  return parseInt(localStorage.getItem(getTodayKey()) || "0");
+}
+
+function incrementDailyCount() {
+  const key = getTodayKey();
+  localStorage.setItem(key, getDailyCount() + 1);
+  // Καθάρισε παλιές ημέρες
+  Object.keys(localStorage).forEach(k => {
+    if (k.startsWith("lr_cnt_") && k !== key) localStorage.removeItem(k);
+  });
+}
+
+function isAbuser() {
+  return getDailyCount() >= DAILY_LIMIT;
+}
+
+const ABUSE_MSG = {
+  el: "Έχεις φτάσει το ημερήσιο όριο συνομιλιών. Ελπίζω να βρήκες αυτό που έψαχνες — σε περιμένουμε αύριο! ☕",
+  en: "You've reached today's conversation limit. Hope you found what you were looking for — see you tomorrow! ☕",
+};
+
 /* ── Language switch ── */
 function setLang(l) {
   if (l === lang) return;
@@ -359,6 +397,29 @@ function useChip(idx) {
   callAPI(chip.msg);
 }
 
+/* ── Markdown → plain text parser ── */
+function parseMarkdown(text) {
+  const div = document.createElement("div");
+  div.style.cssText = "font-size:14.5px;line-height:1.6;word-break:break-word;";
+  // Process line by line
+  const lines = text.split("\n");
+  lines.forEach((line, i) => {
+    // Strip leading ##/### headings
+    line = line.replace(/^#{1,3}\s+/, "");
+    // Bold **text** → <strong>
+    line = line.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    // Italic *text* → plain (no italics needed)
+    line = line.replace(/\*(.+?)\*/g, "$1");
+    // Bullet lines — keep as-is but without the asterisk/dash
+    line = line.replace(/^[\*\-]\s+/, "• ");
+    const span = document.createElement("span");
+    span.innerHTML = line;
+    div.appendChild(span);
+    if (i < lines.length - 1) div.appendChild(document.createElement("br"));
+  });
+  return div;
+}
+
 /* ── Chat rendering ── */
 function appendBubble(text, role) {
   const chat = document.getElementById("chat");
@@ -374,7 +435,11 @@ function appendBubble(text, role) {
 
   const b = document.createElement("div");
   b.className = `bubble ${role}`;
-  b.textContent = text;
+  if (role === "bot") {
+    b.appendChild(parseMarkdown(text));
+  } else {
+    b.textContent = text;
+  }
   wrap.appendChild(b);
   chat.appendChild(wrap);
   chat.scrollTop = chat.scrollHeight;
@@ -409,6 +474,16 @@ function hideTyping() {
 async function callAPI(userMsg) {
   if (loading) return;
 
+  // Έλεγχος ημερήσιου ορίου (fingerprint)
+  if (isAbuser()) {
+    appendBubble(ABUSE_MSG[lang], "bot");
+    document.getElementById("inp").disabled = true;
+    document.getElementById("sendBtn").disabled = true;
+    document.getElementById("chips").innerHTML = "";
+    return;
+  }
+
+  // Έλεγχος session limit (5 μηνύματα)
   msgCount++;
   if (msgCount > MSG_LIMIT) {
     appendBubble(LIMIT_MSG[lang], "bot");
@@ -418,6 +493,7 @@ async function callAPI(userMsg) {
     return;
   }
 
+  incrementDailyCount();
   loading = true;
   document.getElementById("sendBtn").disabled = true;
 
@@ -428,7 +504,7 @@ async function callAPI(userMsg) {
     const res = await fetch("/.netlify/functions/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: history, language: lang }),
+      body: JSON.stringify({ messages: history, language: lang, fp: getFingerprint() }),
     });
 
     const data = await res.json();
@@ -441,6 +517,7 @@ async function callAPI(userMsg) {
   } catch {
     hideTyping();
     history.pop();
+    msgCount--;
     appendBubble(ERROR_MSG[lang], "bot");
   }
 
